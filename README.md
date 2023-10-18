@@ -71,8 +71,8 @@ var pid = 81700001;
 var key = 'xxxxx-xxxx-xxxx-xxxx-xxxxx';
 var ts = parseInt(new Date().getTime() / 1000);
 var coreString = pid + ":" + ts;
-var hmac = crypto.createHmac('sha256', Buffer.from(key, 'base64').toString('utf-8')).update(coreString);
-var token = hmac.digest('base64');
+var coreStringMD5 = md5(coreString).toLowerCase();
+var token = CryptoJS.HmacSHA256(coreStringMD5, key).toString();
 ```
 
 #### 识别与翻译结果推送结构示例 ####

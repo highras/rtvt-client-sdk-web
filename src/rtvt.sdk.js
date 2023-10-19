@@ -281,12 +281,12 @@ class RTVTClient {
             };
     
             sendQuest.call(self, self._client, options, function(err, data) {
-                if (!err) {
+                if (data.successed === true) {
                     self._canReconnect = true;
                     callback && callback(true, fpnn.FPConfig.ERROR_CODE.FPNN_EC_OK);
                 } else {
                     self._canReconnect = false;
-                    callback && callback(false, err.code);
+                    callback && callback(false, 800001);
                 }
 
                 self._client.events = {};

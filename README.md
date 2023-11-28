@@ -15,7 +15,7 @@
 ```javascript
 
 let rtvtClient = new RTVTClient({
-    endpoint: 'wss://rtvt.livedata.top:14002',  // endpoint由控制台获取
+    endpoint: 'wss://rtvt.ilivedata.com:14002',  // endpoint由控制台获取
     pid: pid,   // pid由控制台获取
     uid: uid,  // uid
 });

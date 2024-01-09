@@ -1,4 +1,4 @@
-const RTVT_SDK_VERSION = "1.0.1";
+const RTVT_SDK_VERSION = "1.0.2";
 
 const RTVT_ERROR_CODE = {
     RTVT_EC_TOKEN_INVALID: 300001,

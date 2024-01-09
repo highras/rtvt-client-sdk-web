@@ -92,6 +92,8 @@ class RTVTStream {
         this._srcLang = options.srcLang;
         this._destLang = options.destLang;
         this._asrResult = options.asrResult;
+        this._transResult = options.transResult,
+        this._asrTempResult = options.asrTempResult,
         this._streamID = options.streamID;
         this._client = options.client;
     }
@@ -169,12 +171,14 @@ class RTVTClient {
         }
     }
 
-    createStream(srcLang, destLang, asrResult, callback, oldID) {
+    createStream(srcLang, destLang, asrResult, asrTempResult, transResult, callback, oldID) {
         let options = {
             flag: 1,
             method: 'voiceStart',
             payload: msgpack.encode({
                 asrResult: asrResult,
+                asrTempResult: asrTempResult,
+                transResult: transResult,
                 srcLanguage: srcLang,
                 destLanguage: destLang,
             }),
@@ -188,6 +192,8 @@ class RTVTClient {
                     srcLang: srcLang,
                     destLang: destLang,
                     asrResult: asrResult,
+                    transResult: transResult,
+                    asrTempResult: asrTempResult,
                     streamID: data.streamId,
                     client: self,
                 };
@@ -204,7 +210,9 @@ class RTVTClient {
                     self._streamMap[stream._id] = stream;
                     self._streamID2IDMap[stream._streamID.toString()] = stream._id;
                 }
-                callback(stream, 0);
+                if (callback) {
+                    callback(stream, 0);
+                }
             } else {
                 callback && callback(null, err.code);
             }
@@ -240,6 +248,7 @@ class RTVTClient {
             ts: new Int64BE(parseInt('' + new Date().getTime())),
         };
         let self = this;
+        let start = parseInt(new Date().getTime());
         sendQuest.call(this, this._client, options, function(err, data) {
             if (err) {
                 self.emit('ErrorRecorder', err);
@@ -281,7 +290,7 @@ class RTVTClient {
             };
     
             sendQuest.call(self, self._client, options, function(err, data) {
-                if (data.successed === true) {
+                if (data && data.successed === true) {
                     self._canReconnect = true;
                     callback && callback(true, fpnn.FPConfig.ERROR_CODE.FPNN_EC_OK);
                 } else {
@@ -294,6 +303,8 @@ class RTVTClient {
                 self._client.on('close', function() {
                     if (self.clientVersion == self._client.clientVersion) {
                         self.onClose();
+                    } else {
+                        self.emit('ErrorRecorder', "clientVersion not match");
                     }
                 });
         
@@ -302,18 +313,35 @@ class RTVTClient {
                 });
             
                 self._client.processor.on('recognizedResult', function(payload, cb) {
+
+                    cb(msgpack.encode({}), false);
+
                     let data = msgpack.decode(payload, {codec: msgpack.createCodec({ 
                         int64: true
                     })});
                    
                     self.emit("recognizedResult", data);
                 });
-        
-                self._client.processor.on('translatedResult', function(payload, cb) {
+
+                self._client.processor.on('recognizedTempResult', function(payload, cb) {
+
+                    cb(msgpack.encode({}), false);
+
                     let data = msgpack.decode(payload, {codec: msgpack.createCodec({ 
                         int64: true
                     })});
-                        
+                   
+                    self.emit("recognizedTempResult", data);
+                });
+        
+                self._client.processor.on('translatedResult', function(payload, cb) {
+
+                    cb(msgpack.encode({}), false);
+
+                    let data = msgpack.decode(payload, {codec: msgpack.createCodec({ 
+                        int64: true
+                    })});
+
                     self.emit("translatedResult", data);
                 });
 
@@ -370,6 +398,9 @@ class RTVTClient {
         if (this._lastReconnectTime > 0 && now - this._lastReconnectTime < 1000) {
             interval = this._reconnectInterval - now + this._lastReconnectTime;
         }
+        if (interval < 5000) {
+            interval = 5000;
+        }
 
         let self = this;
         this._reconnectTimer = setTimeout(function() {
@@ -380,10 +411,9 @@ class RTVTClient {
                     if (oldCount > 0) {
                         var newStreamMap = {};
                         var recoverNum = 0;
-
                         for (var i in self._streamMap) {
                             let oldStream = self._streamMap[i];
-                            self.createStream(oldStream._srcLang, oldStream._destLang, oldStream._asrResult, function(stream, errorCode) {
+                            self.createStream(oldStream._srcLang, oldStream._destLang, oldStream._asrResult, oldStream._asrTempResult, oldStream._transResult, function(stream, errorCode) {
                                 if (stream === undefined || stream === null) {
                                     self.emit('ErrorRecorder', "recover stream error: " + errorCode);
                                     return;

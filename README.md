@@ -42,7 +42,7 @@ rtvtClient.login(token, ts, function(ok, errorCode) {
     }
 
     // 创建流
-    rtvtClient.createStream("zh", "en", true, function(stream, errorCode) {
+    rtvtClient.createStream("zh", "en", true, true, true, function(stream, errorCode) {
         if (stream == null) {
             console.log("create stream fail: " + errorCode);
             return;

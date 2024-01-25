@@ -1,4 +1,4 @@
-const RTVT_SDK_VERSION = "1.0.2";
+const RTVT_SDK_VERSION = "1.0.3";
 
 const RTVT_ERROR_CODE = {
     RTVT_EC_TOKEN_INVALID: 300001,
@@ -171,13 +171,13 @@ class RTVTClient {
         }
     }
 
-    createStream(srcLang, destLang, asrResult, asrTempResult, transResult, callback, oldID) {
+    createStream(srcLang, destLang, asrResult, tempResult, transResult, callback, oldID) {
         let options = {
             flag: 1,
             method: 'voiceStart',
             payload: msgpack.encode({
                 asrResult: asrResult,
-                asrTempResult: asrTempResult,
+                asrTempResult: tempResult,
                 transResult: transResult,
                 srcLanguage: srcLang,
                 destLanguage: destLang,
@@ -193,7 +193,7 @@ class RTVTClient {
                     destLang: destLang,
                     asrResult: asrResult,
                     transResult: transResult,
-                    asrTempResult: asrTempResult,
+                    asrTempResult: tempResult,
                     streamID: data.streamId,
                     client: self,
                 };
@@ -343,6 +343,17 @@ class RTVTClient {
                     })});
 
                     self.emit("translatedResult", data);
+                });
+
+                self._client.processor.on('translatedTempResult', function(payload, cb) {
+
+                    cb(msgpack.encode({}), false);
+
+                    let data = msgpack.decode(payload, {codec: msgpack.createCodec({ 
+                        int64: true
+                    })});
+
+                    self.emit("translatedTempResult", data);
                 });
 
                 if (self._pingTimers != 0) {

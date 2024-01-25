@@ -58,6 +58,16 @@ rtvtClient.login(token, ts, function(ok, errorCode) {
             console.log(data);
         });
 
+        // 有临时识别结果时触发，data具体格式见下文
+        rtvtClient.on("recognizedTempResult", function(data) {
+            console.log(data);
+        });
+
+        // 有临时翻译结果时触发，data具体格式见下文
+        rtvtClient.on("translatedTempResult", function(data) {
+            console.log(data);
+        });
+
         // 发送音频PCM数据, 要求16000采样率 单声道 固定640字节，seq为语音片段序号(尽量有序)
         rtvtClient.sendVoice(stream, seq, pcm);
     });
